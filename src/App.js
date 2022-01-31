@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Button,
   Container,
@@ -10,43 +10,62 @@ import {
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+const encryptedValues = {
+  a: 'ai',
+  A: 'Ai',
+  e: 'enter',
+  E: 'Enter',
+  i: 'imes',
+  I: 'Imes',
+  o: 'ober',
+  O: 'Ober',
+  u: 'ufat',
+  U: 'Ufat'
+}
+
+const decryptedValues = {
+  ai: 'a',
+  Ai: 'A',
+  enter: 'e',
+  Enter: 'E',
+  imes: 'i',
+  Imes: 'I',
+  ober: 'o',
+  Ober: 'O',
+  ufat: 'u',
+  Ufat: 'U'
+}
+
 function App() {
   const [value, setValue] = useState("");
-  const [encryptedValue, setEncryptedValue] = useState("");
-  const [DencryptedValue, setDEncryptedValue] = useState("");
-  const [valuetext, setvaluetext] = useState("");
+  const [isCopied, setCopyState] = useState(false);
+  const [outputText, setOutputText] = useState("");
+  const inputRef = useRef();
 
   const onEncrypt = () => {
-    const newEncryptedValue = value
-      .replace(/[e]/gi, "imes")
-      .replace(/[i]/gi, "ai")
-      .replace(/[o]/gi, "ober")
-      .replace(/[a]/gi, "enter")
-      .replace(/[u]/gi, "ufat");
-    setvaluetext(newEncryptedValue);
-    setValue = "";
+    // To avoid multiple conditional statements. Use an object and match by key.
+    // replace() allows you to pass a function for complex string replacing. https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
+    const newEncryptedValue = value.replace(/[aeiou]/gi, (match) => encryptedValues[match]);
+    setOutputText(newEncryptedValue);
   };
-  const onDEncrypt = () => {
-    const newDEncryptedValue = value
-      .replace(/[imes]/gi, "e")
-      .replace(/[ai]/gi, "i")
-      .replace(/[ober]/gi, "o")
-      .replace(/[enter]/gi, "a")
-      .replace(/[ufat]/gi, "u");
-    setvaluetext(newDEncryptedValue);
-    setValue = "";
+  const onDecrypt = () => {
+    const newDecryptedValue = value.replace(/(ai|enter|imes|ober|ufat)/gi, (match) => decryptedValues[match])
+    setOutputText(newDecryptedValue);
   };
-  const Oncopy = () => {
-    var texto = value;
-    texto.select();
-    document.execCommand("copy");
-    console.log("Texto copiado");
+  const onCopy = ({ target }) => {
+    inputRef.current.select();
+    document.execCommand('copy');
+    target.focus();
+    setCopyState(true)
+
+    setTimeout(() => {
+      setCopyState(false);
+    }, 3000)
   };
 
   const onValueChange = ({ target }) => {
     setValue(target.value);
   };
-  //JSON.stringify({ encryptedValue, DencryptedValue })}
 
   return (
     <Container>
@@ -79,7 +98,7 @@ function App() {
               <Button variant="primary" onClick={onEncrypt}>
                 Encriptar
               </Button>{" "}
-              <Button variant="secondary" onClick={onDEncrypt}>
+              <Button variant="secondary" onClick={onDecrypt}>
                 Desencriptar
               </Button>{" "}
             </Card.Body>
@@ -95,13 +114,15 @@ function App() {
                   type="text"
                   id="Textoread"
                   placeholder="Readonly input here..."
-                  onChange={onValueChange}
                   readOnly
-                  value={valuetext}
+                  value={outputText}
+                  ref={inputRef}
+                  isValid={isCopied}
                 />{" "}
+                {isCopied && <Form.Control.Feedback>Mensaje copiado</Form.Control.Feedback>}
               </Form>
               <br />
-              <Button variant="success" onClick={Oncopy}>
+              <Button variant="success" onClick={onCopy}>
                 Copy
               </Button>{" "}
             </Card.Body>
